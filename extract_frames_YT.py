@@ -1,6 +1,4 @@
-mport
-youtube_dl
-
+import youtube_dl
 import sys
 import os
 import subprocess
