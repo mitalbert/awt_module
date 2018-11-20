@@ -4,17 +4,9 @@ import os
 import subprocess
 import argparse
 
-
-# ydl_opts = {}
-# with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-#     meta = ydl.extract_info(
-#         'https://www.youtube.com/watch?v=Vh9msqaoJZw', download=False)
-#     print(meta['id'], meta['ext'])
-
-
 def download_and_extract(download_url):
-    # Get video meta info and then download using youtube-dl
 
+    # Get video meta info and then download using youtube-dl
     ydl_opts = {}
 
     # get meta info from the video
@@ -30,52 +22,65 @@ def download_and_extract(download_url):
     cmd = ['youtube-dl', '-f bestvideo[height<=?720]', '-o', video_out, download_url]
     subprocess.call(cmd)
 
+    # set ffmpeg according to your system <-- UPDATE
     ffmpeg = '/bin/ffmpeg'
-    # # call iframe-extraction : ffmpeg
+
+    # call frame-extraction : ffmpeg
     imgFilenames = 'frames/' + out + '_%03d.png'
-    total_frames = meta['duration'] * meta['fps'] // 200
-    fps_every = meta['duration'] // 10
+    total_frames = meta['duration'] * meta['fps']
 
-    # keyframe
-    bashCommand1 = "ffmpeg -i " + video_out + " -vf select='eq(pict_type\,I), gt(scene\,0.5), crop=in_h*16/9:in_h, scale=-2:460, crop=640:360:50:50' " + " -frames:v 200 -vsync vfr -vf fps=fps=1/10 " + imgFilenames
+    # define extracted frames per seconds. This formula ensures that no part of the video will be ignored in command1
+    if meta['duration'] < 600:
+        fps_every = "1/6"
+    else:
+        fps_every = "1/"+str(meta['duration']//100)
 
-    # -i yosemiteA.mp4 -vf  "select=gt(scene\,0.5), scale=640:360" -vsync vfr yosemiteThumb%03d.png
-    # scale=640:360,crop=in_h*16/9:in_h,scale=-2:360
+    # selects one representative frame from each set of x frames. This formula ensures that no part of the video will be ignored in command3
+    if meta['duration'] < 600:
+        thumbnail_every = 6*abs(meta['fps'])
+    else:
+        thumbnail_every = (meta['duration']//100)*meta['fps']
 
-    # thumbnail
-    # bashCommand2 = "ffmpeg -ss 10 -i " + video_out + " -vf thumbnail=" + str(total_frames) + ",crop=in_h*16/9:in_h,scale=-2:360" + ",setpts=N/TB -r 1 " + imgFilenames
-    bashCommand2 = "ffmpeg -ss 10 -i " + video_out + " -vf select=gt(scene\,0.3),scale=640:360,crop=in_h*16/9:in_h,scale=-2:360" + " -frames:v 200 -vsync vfr -vf fps=fps=1/" + str(
-        fps_every) + " " + imgFilenames
+    # Define a way to extract images
+    # # -frames:v sets maximum number of extracted images per input
+    # # -ss sets start time in seconds
 
-    bashCommand3 = "ffmpeg -i " + video_out + " -vf select='gt(scene\,0.5),crop=in_h*16/9:in_h,scale=-2:460,crop=640:360:50:50' " + " -frames:v 200 -vsync vfr -vf fps=fps=1/10 "
+    # # keyframe. fps=fps=10/60 means 10 frames out of 60 every seconds
+    bashCommand1 = "ffmpeg -i " + video_out + " -ss 10 -vf 'select=eq(pict_type\,I),fps=fps="+fps_every+",scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr  " + imgFilenames
 
-    bashCommand4 = 'ffmpeg -i ' + 'video_out' + ' -ss 10 -vf "select=gt(scene\,0.3), crop=in_h*16/9:in_h, scale=-2:400,crop=640:360" -vsync vfr ' + imgFilenames
+    # # scene differentiator
+    bashCommand2 = "ffmpeg -i " + video_out + " -ss 10 -vf 'select=gt(scene\,0.7),scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr  " + imgFilenames
+
+    # # create thumbnail out of certain number of frames. setpts and r are set to avoid duplicates
+    bashCommand3 = "ffmpeg -i " + video_out + " -ss 10 -vf 'thumbnail=" + str(thumbnail_every) + ",scale=-2:380,crop=640:360',setpts=N/TB -r 1 -frames:v 150 " + imgFilenames
+    
 
     # ffmpeg -ss 10 -i nQk7DWW4mz8.webm -vf "select=gt(scene\,0.5)" -frames:v 200 -vsync vfr -vf fps=fps=1/5 frames/out_%03d.png
 
     # bashCommand2 = "ffmpeg -i " + video_out + " -vf thumbnail=300,setpts=N/TB -r 1 " + imgFilenames
 
-    print("COMMAND:", bashCommand1)
+    print("COMMAND:", bashCommand3)
     print("total_frames:", total_frames)
     print("Frame every:", fps_every)
+    print("Thumbnail every:", thumbnail_every)
+
 
     # process = subprocess.Popen(bashCommand1.split(), stdout=subprocess.PIPE)
     # output, error = process.communicate()
 
     # subprocess.call(bashCommand1)
-
-    os.system(bashCommand4)
+    # call frame-extraction : ffmpeg
+    os.system(bashCommand3)
 
     # Remove video the file afterwards
-    # os.remove(video_out)
+    os.remove(video_out)
 
     return meta
 
 
 def check_arg(args=None):
-    # Command line options
-    # Currently, only the url option is used
 
+    # Command line options
     parser = argparse.ArgumentParser(description='download video')
     parser.add_argument('-u', '--url',
                         help='download url', )
@@ -88,8 +93,9 @@ def check_arg(args=None):
 
 '''
 Usage sample:
-    syntax: python iframe_extract.py -u url
+    syntax:
     (ex) python iframe_extract.py -u https://www.youtube.com/watch?v=dP15zlyra3c
+    (ex) python iframe_extract.py -l list_of_yt_links.txt
 '''
 if __name__ == '__main__':
     u, l = check_arg(sys.argv[1:])
