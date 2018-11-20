@@ -59,7 +59,7 @@ def download_and_extract(download_url):
 
     # bashCommand2 = "ffmpeg -i " + video_out + " -vf thumbnail=300,setpts=N/TB -r 1 " + imgFilenames
 
-    print("COMMAND:", bashCommand3)
+    print("COMMAND:", bashCommand1)
     print("total_frames:", total_frames)
     print("Frame every:", fps_every)
     print("Thumbnail every:", thumbnail_every)
@@ -70,7 +70,7 @@ def download_and_extract(download_url):
 
     # subprocess.call(bashCommand1)
     # call frame-extraction : ffmpeg
-    os.system(bashCommand3)
+    os.system(bashCommand1)
 
     # Remove video the file afterwards
     os.remove(video_out)
