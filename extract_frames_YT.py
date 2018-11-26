@@ -93,9 +93,10 @@ def check_arg(args=None):
 
 '''
 Usage sample:
+    Install ffmpeg on your system and also youtube_dl using pip.
     syntax:
-    (ex) python iframe_extract.py -u https://www.youtube.com/watch?v=dP15zlyra3c
     (ex) python iframe_extract.py -l list_of_yt_links.txt
+    (ex) python iframe_extract.py -u https://www.youtube.com/watch?v=dP15zlyra3c
 '''
 if __name__ == '__main__':
     u, l = check_arg(sys.argv[1:])
