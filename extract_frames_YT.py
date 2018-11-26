@@ -26,7 +26,7 @@ def download_and_extract(download_url):
     ffmpeg = '/bin/ffmpeg'
 
     # call frame-extraction : ffmpeg
-    imgFilenames = 'frames/' + out + '_%03d.png'
+    imgFilenames = 'frames/' + out + '_%03d.jpg'
     total_frames = meta['duration'] * meta['fps']
 
     # define extracted frames per seconds. This formula ensures that no part of the video will be ignored in command1
@@ -46,13 +46,13 @@ def download_and_extract(download_url):
     # # -ss sets start time in seconds
 
     # # keyframe. fps=fps=10/60 means 10 frames out of 60 every seconds
-    bashCommand1 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'select=eq(pict_type\,I),fps=fps="+fps_every+",scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr  " + imgFilenames
+    bashCommand1 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'select=eq(pict_type\,I),fps=fps="+fps_every+",scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr -c:v mjpeg " + imgFilenames
 
     # # scene differentiator
-    bashCommand2 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'select=gt(scene\,0.7),scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr  " + imgFilenames
+    bashCommand2 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'select=gt(scene\,0.7),scale=-2:380,crop=640:360' -frames:v 150 -vsync vfr -c:v mjpeg " + imgFilenames
 
     # # create thumbnail out of certain number of frames. setpts and r are set to avoid duplicates
-    bashCommand3 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'thumbnail=" + str(thumbnail_every) + ",scale=-2:380,crop=640:360',setpts=N/TB -r 1 -frames:v 150 " + imgFilenames
+    bashCommand3 = "ffmpeg -i " + video_out + " -ss 5 -t " + str(meta['duration']-15) + " -vf 'thumbnail=" + str(thumbnail_every) + ",scale=-2:380,crop=640:360',setpts=N/TB -r 1 -frames:v 150 -c:v mjpeg " + imgFilenames
     
 
     # ffmpeg -ss 10 -i nQk7DWW4mz8.webm -vf "select=gt(scene\,0.5)" -frames:v 200 -vsync vfr -vf fps=fps=1/5 frames/out_%03d.png
